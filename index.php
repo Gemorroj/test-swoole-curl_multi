@@ -20,6 +20,8 @@ function curlRequest(int $delay): ?array
     curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch1, CURLOPT_HTTPHEADER, ['Accept: application/json']);
 
+    curl_setopt($ch1, CURLOPT_VERBOSE, true);
+
 //create the multiple cURL handle
     $mh = curl_multi_init();
 
@@ -40,7 +42,7 @@ function curlRequest(int $delay): ?array
     curl_multi_remove_handle($mh, $ch1);
     curl_multi_close($mh);
 
-    return json_decode($data, true);
+    return json_decode($data, true, 512, JSON_THROW_ON_ERROR);
 }
 
 
@@ -64,11 +66,13 @@ $http->on('request', static function ($request, $response) {
     $time = microtime(true) - $startTime;
 
     $response->header('Content-Type', 'application/json');
-    $response->end(\json_encode([
-        'expected_time' => 'must be less than '.($countRequests * $delay).'sec.',
-        'actual_time' => \round($time, 2),
-        'results' => $results,
-    ]));
+    $response->end(
+        json_encode([
+            'expected_time' => 'must be less than '.($countRequests * $delay).'sec.',
+            'actual_time'   => round($time, 2),
+            'results'       => $results,
+        ], JSON_THROW_ON_ERROR)
+    );
 });
 
 $http->start();
